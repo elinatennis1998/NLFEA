@@ -1,0 +1,164 @@
+% Description of Default parameter values
+% Tim Truster
+% 10/06/2013
+% Revision: 05/16/2015
+List of all other initialization flags and arrays across the program
+should be contained in these locations ONLY:
+1. NL_FEA_Program.m, below initializeFE
+2. pdefault.m
+3. pstart.m
+4. poutinit.m
+
+%% Default values for solution algorithm parameters
+    
+switch transient
+    
+    case -1 % Linear static analysis
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays
+        
+    case 0 % Quasi-static Proportional loading
+        stepmax = 1; % number of steps
+        mults = 1; % values of proportional load factor
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        smax = 1; % maximum scaling parameter for line-search
+        itermax = 10; % maximum number of iterations
+        Residratio = 10^-11; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equaling multiples of this #
+        
+    case {1,2} % Dynamic HHT-Alpha Method - a-form or d-form
+        enercons = 1; % flag=1 for printing energy norm
+        Nalpha = 0; % HHT-alpha method parameter
+        Nbeta = 1/4; % Newmark beta parameter
+        Ngamma = 1/2; % Newmark gamma parameter
+        tstep = 1; % constant time step size
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        Residratio = 10^-12; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equaling multiples of this #
+        
+    case 3 %Energy Conservation by LM according to Hughes, Trans of ASME
+        % Currently only works for NL_Elem3_2d and NL_Elem7_2d
+        enercons = 1; % flag=1 for energy conserving
+        Nalpha = 0; % HHT-alpha method parameter
+        Nbeta = 1/4; % Newmark beta parameter
+        Ngamma = 1/2; % Newmark gamma parameter
+        tstep = 1; % constant time step size
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        Residratio = 10^-12; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equaling multiples of this #
+        
+    case 4 % Energy-Momentum conserving method of Simo
+        enercons = 1; % flag=1 for printing energy norm
+        Nalpha = 0; % HHT-alpha method parameter
+        Nbeta = 1/4; % Newmark beta parameter
+        Ngamma = 1/2; % Newmark gamma parameter
+        tstep = 1; % constant time step size
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        Residratio = 10^-12; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equaling multiples of this #
+        
+    case 5 % Generalized alpha method
+        enercons = 1; % flag=1 for printing energy norm
+        % Formulas for obtaining a given spectral radius for dissipation
+%         rhoinf = 0.75;
+%         Nalphaf = rhoinf/(rhoinf  + 1);0;(1 - rhoinf)/(rhoinf + 1);
+%         Nalpham = (2*rhoinf - 1)/(rhoinf + 1);0;(rhoinf - 1)/(1 + rhoinf);
+%         Nbeta = 1/4*(1 - Nalpham + Nalphaf)^2;1/4;
+%         Ngamma = 1/2 - Nalpham + Nalphaf;1/2;
+        tstep = 1; % constant time step size
+        Nalphaf = 0; % Generalized-alpha method force parameter
+        Nalpham = 0; % Generalized-alpha method acceleration parameter
+        Nbeta = 1/4; % Newmark beta parameter
+        Ngamma = 1/2; % Newmark gamma parameter
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        Residratio = 10^-12; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equaling multiples of this #
+        
+    case 6 % Multiscale Dynamics
+        enercons = 0; % flag=1 for printing energy norm
+        tstep = 1; % constant time step size
+        Nalphaf = 0; % Generalized-alpha method force parameter
+        Nalpham = 0; % Generalized-alpha method acceleration parameter
+        Nbeta = 1/4; % Newmark beta parameter
+        Ngamma = 1/2; % Newmark gamma parameter
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        Residratio = 10^-12; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equaling multiples of this #
+        
+    case 7 % Quasi-static Arc-Length Method
+        b = 1; % [0 1] = [disp control, force control]
+        s_del_a = 1; % measure of arc-length distance
+        lamdamax = 1; % maximum load-level parameter
+        smax = 1; % maximum scaling parameter for line-search
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays
+        Residratio = 10^-11; % relative tolerance for residual norm
+        residratio = 10^-12; % relative tolerance for arc-length norm
+        ddmax = 0; % ?
+        reststep = 100; % dump data at steps equalting multiples of this #
+        
+    case 8 % Thermoelasticity with Newmark for disp and gener-trap for temp
+        enercons = 0; % flag=1 for printing energy norm
+        tstep = 1; % constant time step size
+        Nalphaf = 0; % Generalized-alpha method force parameter
+        Nalpham = 0; % Generalized-alpha method acceleration parameter
+        Nbeta = 1/4; % Newmark beta parameter
+        Ngamma = 1/2; % Newmark gamma parameter
+        Nalphat = 1; % Generalized trapezoidal rule parameter, 0=Forward Euler, 1=Backward Euler
+        itermax = 10; % maximum number of iterations
+        stepmax = 1; % number of steps
+        datastep = stepmax; % size of output arrays; should be larger than stepmax if continuation is expected
+        Residratio = 10^-12; % relative tolerance for residual norm
+        reststep = 100; % dump data at steps equalting multiples of this #
+        
+end
+
+% Load input counters, NCR=1
+    numComp = 0; % Tying node commands
+    numBC = 0; % Boundary condition, scaled by lamda
+    numBCnp = 0; % Boundary condition, non-proportional
+    numIC = 0; % Initial field value (e.g. displacements)
+    numVIC = 0; % Initial rates (e.g. velocities)
+    numNodalF = 0; % Nodal loads, scaled by lamda
+    numNodalFnp = 0; % Nodal loads, non-proportional
+    numSL = 0; % Surface loads, scaled by lamda, isw=-1
+    numSLnp = 0; % Surface loads, non-proportional, isw=-1
+    numD = 0; % Weak Dirichlet BCs, currently inactive, isw=-3
+    intfl = 0; % T/F flag to include body forces
+    numBF = 0; % Number of material sets with body forces
+
+% Load input counters, NCR=[2,3]
+    numSL_new = 0; % Surface loads, scaled by lamda, isw=-1
+    numSLnp_new = 0; % Surface loads, non-proportional, isw=-1
+    numNodalF_new = 0; % Nodal loads, scaled by lamda
+    numNodalFnp_new = 0; % Nodal loads, non-proportional
+
+% Error estimation macro
+expliciterr = 0; % T/T flag for performing explicit error estimation
+impliciterr = 0; % T/T flag for performing implicit and global error estimation
+implicon = 1; % T/T flag for using local-implicit or local-explicit error for driving global error
+subm = 1; % T/T flag for ?
+residflag = 0; % T/T flag for ?
+
+% Dynamics flags
+lumping = 0; % set 0 for no mass lumping, 1 for lumping of mass matrix
+
+% Algorithm parameters
+restartmat = 1; % T/T flag for writing restart (.mat) files
+printRnorm = 1; % T/T flag for printing residual norm to screen
+hrstore = 0; % T/T flag for storing history variables for all time levels
+
+% Other parameters
+% Mixed element and stress nodes per element
+nelPn = 1; %1 for unequal-order, 0 for equal-order

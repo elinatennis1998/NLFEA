@@ -1,0 +1,195 @@
+NL_FEA_Program Code Structure Outline
+by Tim Truster
+10/06/2013
+
+------------
+Introduction
+------------
+
+This program is structured as a skeleton around which various nonlinear solution
+strategies can be implemented. Various strategies are accessed by using the control
+flag 'transient'. This flag emulates the command/solver portion of a FEAP input
+file whereby the user creates on-the-fly the type of solution strategy they desire.
+
+The control flag 'NCR' is used to specify a new run with initialize all arrays
+(NCR=1), restart from stored restart/.mat files (NCR=2), or continuation (NCR=3). 
+This flag is either specified in the batch file or MATLAB command window or is
+initialized as NCR=1 if the variable does not exist at program start.
+
+It is possible to change from one strategy to another (e.g. to perform a quasi-
+static preload followed by dynamic analysis) by exiting the program after one
+simulation, reseting 'transient' and any other commands/material data in a restart
+command file, and doing a restart call of the program (NCR=2 or 3).
+
+To create new solution strategies:
+Insert code in each portion where 'Task Switch' below indicates that 'transient'
+is considered.
+
+
+General structure of descriptions:
+
+Module: Header in the script
+Location: .m file where located
+Script/Function Calls: .m files that are called within this portion
+Task Switch: transient or isw values
+Description: Describes what the module does
+
+Blank Template
+Module: 
+Location: 
+Script/Function Calls: 
+Task Switch: 
+Description: 
+
+
+-------------------
+Assembly Structure:
+-------------------
+
+Module: Assemble Quantities from Model Routine
+Location: FormFE
+Script/Function Calls: plocal, ElemRout, Assem*
+Task Switch: transient/isw predefined outside of script
+Description: Initializes global FE quantities (scalars, vectors, and/or matrices)
+             and loops over all elements and material sets; initialization can
+             depend upon the 'transient' flag; other user macros requiring
+             assembly can be inserted under a new value for 'isw'.
+             
+Note: Assembly arrays (e.g. ElemK, ElemF) are zeroed inside ElemRout before
+      accessing the element subroutine. If a new task 'isw' is added, the
+      proper zeroing should be added.
+
+
+------------------
+Program Structure:
+------------------
+
+Module: Launch Program
+Location: NL_FEA_Program
+Script/Function Calls: pstart, pdefault, prestart
+Task Switch: N/A
+Description: Batch or interactive selection of input/restart file, load default
+             parameters. Clearing and clc are left up to the user of the program.
+             Values of batchinter and NCR can be defined outside of the program
+             before execution.
+             
+Module: FE array initialization
+Location: NL_FEA_Program
+Script/Function Calls: initializeFE, FormKs, ploadi_new
+Task Switch: isw=[1,40]
+Description: For NCR=1, (in this order) scan input data, store BCs, read material
+             data and call isw=1, set final BC cods, set history addresses, form 
+             NDOFT, set nel and other flags, calculate surface forces, store ICs, 
+             and calculate body forces; form sparsity pattern; allocate solution
+             arrays; initialize history variables with isw=40
+             For NCR=[2,3], calculate new surface and nodal loads (added to current).
+
+Module: Problem Initialization
+Location: NL_FEA_Program
+Script/Function Calls: FormFE, etc
+Task Switch: transient
+Description: Perform analysis solution array initializations, such as computing
+             stiffness matrix for all linear material elements, computing mass
+             matrix, computing initial accelerations, computing initial system
+             energy, setting up arc-length variables, setting up thermo-mechanical
+             dof splitting and time integration.
+             
+Module: Loop for time-history of problem solution
+Location: NL_FEA_Program
+Script/Function Calls: NR_Loop3
+Task Switch: transient
+Description: Either perform a nonlinear analysis, or solve Kd=F for transient=-1;
+             also compute reactions and stresses for linear problem. Nonlinear loop
+             is for lamda<=lamdamax and step<stepmax.
+
+
+while step < stepmax && ~(transient==7 && lamdamax < lamda + 10*eps)
+
+
+  Module: Advance time marching parameters
+  Location: NR_Loop3
+  Script/Function Calls: N/A
+  Task Switch: N/A
+  Description: step = step + 1; iter = 0;
+               initia = 1; %flag to prescribe an elastic predictor step
+  
+  Module: Compute any required initial quantities
+  Location: NR_Loop3
+  Script/Function Calls: FormFE, etc
+  Task Switch: transient, isw=3, etc
+  Description: Initialize a step of Newton-Raphson or other solution scheme;
+               form stiffness matrix and residual vector, apply constrained
+               BCs, compute initial residual norm, perform one additional
+               iteration
+               
+  Module: Set residual tolerance
+  Location: NR_Loop3
+  Script/Function Calls: N/A
+  Task Switch: N/A
+  Description: Check if already converged (Rnorm is small) or set tolerances
+  
+  Module: Loop for Newton-Raphson Method NL Solver
+  Location: NR_Loop3
+  Script/Function Calls: N/A
+  Task Switch: N/A
+  Description: Iteration loop for nonlinear problem solution
+  
+  
+  while iter < itermax && (Rnorm > Residtol || rarc > residtol) && numbernonlinear > 0
+  
+    iter = iter + 1;
+        
+  
+    Module: Solve for incremental quantities
+    Location: NR_Loop3
+    Script/Function Calls: FormFE, etc
+    Task Switch: transient, isw=[3,6], etc
+    Description: Perform one Newton iteration or equivalent. Example: del_d=K\R, 
+                 d = d + del_d, load Fext, compute R=Fext-Fint (and K), compute
+                 Rnorm
+                 
+                 
+  end % End NRM NL Solver
+    
+    
+  Module: Perform post-processing and data shifts
+  Location: NR_Loop3
+  Script/Function Calls: N/A
+  Task Switch: transient
+  Description: Perform any final data shifts needed after NR convergence (e.g.
+               compute updated velocity and acceleration for certain time
+               marching schemes)
+    
+  Module: Output converged values to history arrays
+  Location: NR_Loop3
+  Script/Function Calls: FormFE, FormS2
+  Task Switch: transient, isw=[6,24,25]
+  Description: Move current solution into output/history arrays; compute reactions
+               and stresses; compute system energy.
+               
+  Module: Update internal variables
+  Location: NR_Loop3
+  Script/Function Calls: reshis
+  Task Switch: N/A
+  Description: Move history variables from t_n+1 to t_n
+               
+  Module: Dump data to restart file
+  Location: NR_Loop3
+  Script/Function Calls: N/A
+  Task Switch: N/A
+  Description: Save a snapshot of the MATLAB workspace (all current variables)
+  
+  
+  if Rnorm > 1
+     break
+  end
+    
+end % End time-history solution
+  
+             
+Module: Perform final data processing
+Location: NL_FEA_Program
+Script/Function Calls: Explicit_Error_Estimation, Implicit_Error_Estimation
+Task Switch: N/A
+Description: Move current solution values from ModelDx into Node_U_V; run macros
+             for explicit and implicit error estimation.
