@@ -693,10 +693,10 @@ switch isw %Task Switch
                 NmatM = zeros(ndm,nstM);
                 NmatMg = zeros(ndm,nstM);
                 
-                TmatL = bnAdN1 - ep*NmatL;
-                TmatR = bnAdN2 + ep*NmatR;
-                TmatLg = bnAdN1g - ep*NmatLg;
-                TmatRg = bnAdN2g + ep*NmatRg;
+                TmatL = bnAdN1 + ep*NmatL*Lmicr;
+                TmatR = bnAdN2 - ep*NmatR*Lmicr;
+                TmatLg = bnAdN1g + ep*NmatLg*Lmeso;
+                TmatRg = bnAdN2g - ep*NmatRg*Lmeso;
             %End of modification
                 %Forces
                 zeta = NmatM*ulresM;
@@ -738,7 +738,7 @@ switch isw %Task Switch
 %                 Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg ElemKRM
 %                 Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg ElemKLgMg
 %                 Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg ElemKRgMg
-%                 ElemKML ElemKMR ElemKLMg ElemKRMg ElemKMM];
+%                 ElemKML ElemKMR ElemKMgLg ElemKMgRg ElemKMMg];
 %             ElemF = [Lmicr*ElemFL; Rmicr*ElemFR; Lmeso*ElemFLg; Rmeso*ElemFRg; ElemFM]-ElemK*[ulresL; ulresR; ulresLg; ulresRg; ulresM];
            %Idea 2 (enriching all DG)
             ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR ElemKLM Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg ElemKLMg
@@ -749,11 +749,11 @@ switch isw %Task Switch
                 ElemKMgL ElemKMgR ElemKMgM ElemKMgLg ElemKMgRg ElemKMgMg];
             %ElemF = [ElemF ElemFM];
         else
-            ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg
-                Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg
-                Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg
-                Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg];
-            ElemF = [Lmicr*ElemFL; Rmicr*ElemFR; Lmeso*ElemFLg; Rmeso*ElemFRg]-ElemK*[ulresL; ulresR; ulresLg; ulresRg];
+%             ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg
+%                 Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg
+%                 Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg
+%                 Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg];
+%             ElemF = [Lmicr*ElemFL; Rmicr*ElemFR; Lmeso*ElemFLg; Rmeso*ElemFRg]-ElemK*[ulresL; ulresR; ulresLg; ulresRg];
             
         end
         ElemK;
