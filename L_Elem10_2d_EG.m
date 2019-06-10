@@ -4,11 +4,9 @@
 % Last Modified 3/21/2019
 
 if isw ~= 1
-    if exist('flag_PBC','var') && flag_PBC ==1
-        CGtoDGPBCarrays
-    else
-        CGtoDGarrays
-    end
+
+CGtoDGarrays
+
 nelLP = nelL;
 nelRP = nelR;
 
@@ -151,30 +149,8 @@ switch isw %Task Switch
         ulresRg = reshape(ulRg,ndf*nelRg,1);
         
         % Determin bounds of integration segment
-        if exist('flag_PBC','var') && flag_PBC ==1
-            
-            %Modification of 4/17/2019
-%             ulresM = reshape(ulM,ndf*ndm,1);
-%             xlresM = reshape(xlM,ndf*ndm,1);
-% %             [zetaX,zeta, NmatM,dx,dy] = compute_zeta3(xlR,xlL,ulresM,xlresM);
-%             zetaX = NmatM*xlresM;
-            NmatM = zeros(ndm,nstM);
-            for i = 1:ndm
-                NmatM(1,ndm*i-1) = Coeffs(i);
-                NmatM(2,ndm*i) = Coeffs(i);
-            end
-
-            ulresL = reshape(ulL,ndf*nelL,1);
-            ulresR = reshape(ulR,ndf*nelR,1);
-            ulresM = reshape(ulM,ndf*ndm,1);
-            xlresM = reshape(xlM,ndf*ndm,1);
-
-            % Determin bounds of integration segment
-            zetaX = NmatM*xlresM;
-            InterConn2D2PBC
-        else
-            InterConn2D2 % InterConn2DT %
-        end
+        
+         InterConn2D2 % InterConn2DT %
         %End of Modification of 4/17/2019
         
         % Set jacobian for integration space
@@ -331,12 +307,9 @@ switch isw %Task Switch
                  error('nmd=3')
              end
              
-             if exist('flag_PBC','var') && flag_PBC ==1
-                 Load = [NodeLoad(1,3); NodeLoad(4,3); NodeLoad(2,3)];
-                 fluxT = factorT*trjump*Load;
-             else
+            
                  fluxT = factorT*trjump*eRVE';
-             end
+            
              %Part from TaylorSet end
              
              %Part from Sachs set
@@ -662,100 +635,14 @@ switch isw %Task Switch
             ElemFLg = ElemFLg + c1*( + bnAdN1g'*jumpi);
             ElemFRg = ElemFRg + c1*( + bnAdN2g'*jumpi);
             
-            %PBC Modification 4/16/2019
-            if exist('flag_PBC','var') && flag_PBC ==1
-                %PBC  modification of 4/16/2019
-                ElemFM = zeros(nstM,1);
-                ElemKMR = zeros(nstM,nstR); %4x8
-                ElemKML = zeros(nstM,nstL); %4x8
-                ElemKRM = zeros(nstR,nstM); %8x4
-                ElemKLM = zeros(nstL,nstM); %8x4
-                ElemKMM = zeros(nstM,nstM); %4x4
-                
-                ElemKLMg = zeros(nstL,nstM); %8x4
-                ElemKRMg = zeros(nstR,nstM); %8x4
-                ElemKMLg = zeros(nstM,nstM+2);%4x6
-                ElemKMRg = zeros(nstM,nstM+2);%4x6
-                ElemKMMg = zeros(nstM,nstM);%4x4
-                
-                ElemKRgMg = zeros(nstM+2,nstM);%6x4
-                ElemKLgMg = zeros(nstM+2,nstM);%6x4
-                ElemKMgRg = zeros(nstM,nstM+2);%4x6
-                ElemKMgLg = zeros(nstM,nstM+2);%4x6
-                ElemKMgMg = zeros(nstM,nstM); %4x4
-                
-                ElemKLgM = zeros(nstM+2,nstM); %6x4
-                ElemKRgM = zeros(nstM+2,nstM); %6x4
-                ElemKMgL = zeros(nstM,nstL); %4x8
-                ElemKMgR = zeros(nstM,nstR); %4x8
-                ElemKMgM = zeros(nstM,nstM); %4x4
-                
-                NmatM = zeros(ndm,nstM);
-                NmatMg = zeros(ndm,nstM);
-                
-                TmatL = bnAdN1 + ep*NmatL*Lmicr;
-                TmatR = bnAdN2 - ep*NmatR*Lmicr;
-                TmatLg = bnAdN1g + ep*NmatLg*Lmeso;
-                TmatRg = bnAdN2g - ep*NmatRg*Lmeso;
-            %End of modification
-                %Forces
-                zeta = NmatM*ulresM;
-                ElemFLg = ElemFLg - c1*( - NmatLg'*ep*jumpi - bnAdN1g'*jumpi + NmatLg'*gamR'*fluxj);
-                ElemFRg = ElemFRg - c1*( + NmatRg'*ep*jumpi - bnAdN2g'*jumpi + NmatRg'*gamL'*fluxj);
-                ElemFM = ElemFM - c1*( - NmatM'*(tvtr + ep*(jumpu-zeta)));
-                
-                %Modification of 5/15/19
-                ElemKLM = ElemKLM - c1*TmatL'*NmatM;
-                ElemKRM = ElemKRM - c1*TmatR'*NmatM;
-                ElemKLgMg = ElemKLgMg - c1*TmatLg'*NmatMg;
-                ElemKRgMg = ElemKRgMg - c1*TmatRg'*NmatMg;
-                ElemKLMg = ElemKLMg - c1*TmatL'*NmatMg;
-                ElemKRMg = ElemKRMg - c1*TmatR'*NmatMg;
-                ElemKLgM = ElemKLgM - c1*TmatLg'*NmatM;
-                ElemKRgM = ElemKRgM - c1*TmatRg'*NmatM;
-                
-                ElemKML = ElemKML - c1*NmatM'*TmatL;
-                ElemKMR = ElemKMR - c1*NmatM'*TmatR;
-                ElemKMgLg = ElemKMgLg - c1*NmatMg'*TmatLg;
-                ElemKMgRg = ElemKMgRg - c1*NmatMg'*TmatRg;
-                ElemKMLg = ElemKMLg - c1*NmatM'*TmatLg;
-                ElemKMRg = ElemKMRg - c1*NmatM'*TmatRg;
-                ElemKMgL = ElemKMgL - c1*NmatMg'*TmatL;
-                ElemKMgR = ElemKMgR - c1*NmatMg'*TmatR;
-                
-                ElemKMM = ElemKMM + c1*NmatM'*ep*NmatM; 
-                ElemKMMg = ElemKMMg + c1*NmatM'*ep*NmatMg;
-                ElemKMgM = ElemKMgM + c1*NmatMg'*ep*NmatM;
-                ElemKMgMg = ElemKMgMg + c1*NmatMg'*ep*NmatMg;
-                %End of modification of 5/15/19
-            end
-            %End of modification 4/16/2019
         end
-% ElemKLL
-        if exist('flag_PBC','var') && flag_PBC ==1
-            %Idea 1 enriching regular DG only (wrong results)
-%             ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg ElemKLM
-%                 Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg ElemKRM
-%                 Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg ElemKLgMg
-%                 Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg ElemKRgMg
-%                 ElemKML ElemKMR ElemKMgLg ElemKMgRg ElemKMMg];
-%             ElemF = [Lmicr*ElemFL; Rmicr*ElemFR; Lmeso*ElemFLg; Rmeso*ElemFRg; ElemFM]-ElemK*[ulresL; ulresR; ulresLg; ulresRg; ulresM];
-           %Idea 2 (enriching all DG)
-            ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR ElemKLM Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg ElemKLMg
-                Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR ElemKRM Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg ElemKRMg
-                ElemKML ElemKMR ElemKMM ElemKMLg ElemKMRg ElemKMMg
-                Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR ElemKLgM Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg ElemKLgMg
-                Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR ElemKRgM Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg ElemKRgMg
-                ElemKMgL ElemKMgR ElemKMgM ElemKMgLg ElemKMgRg ElemKMgMg];
-            %ElemF = [ElemF ElemFM];
-        else
-%             ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg
-%                 Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg
-%                 Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg
-%                 Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg];
-%             ElemF = [Lmicr*ElemFL; Rmicr*ElemFR; Lmeso*ElemFLg; Rmeso*ElemFRg]-ElemK*[ulresL; ulresR; ulresLg; ulresRg];
-            
-        end
+
+            ElemK = [Lmicr*Lmicr* ElemKLL Lmicr*Rmicr* ElemKLR Lmicr*Lmeso* ElemKLLg Lmicr*Rmeso* ElemKLRg
+                Rmicr*Lmicr* ElemKRL Rmicr*Rmicr* ElemKRR Rmicr*Lmeso* ElemKRLg Rmicr*Rmeso* ElemKRRg
+                Lmeso*Lmicr*ElemKLgL Lmeso*Rmicr*ElemKLgR Lmeso*Lmeso*ElemKLgLg Lmeso*Rmeso*ElemKLgRg
+                Rmeso*Lmicr*ElemKRgL Rmeso*Rmicr*ElemKRgR Rmeso*Lmeso*ElemKRgLg Rmeso*Rmeso*ElemKRgRg];
+            ElemF = [Lmicr*ElemFL; Rmicr*ElemFR; Lmeso*ElemFLg; Rmeso*ElemFRg]-ElemK*[ulresL; ulresR; ulresLg; ulresRg];
+
         ElemK;
 %%        
     case 51 
