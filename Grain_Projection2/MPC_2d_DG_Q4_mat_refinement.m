@@ -173,10 +173,10 @@ MateT = [100 0.25 1 0 0 0 0
          1 1 4 4 0 0 0];
 
 % % Applied displacements instead of forces
-NodeLoad2 = [82 1 0.1
-             82 2 0
-             83 1 0
-             83 2 0];
+NodeLoad2 = [MPC_BCx 1 0.1
+             MPC_BCx 2 0
+             MPC_BCy 1 0
+             MPC_BCy 2 0];
 NodeBC = [NodeBC; NodeLoad2];
 numBC = length(NodeBC);
 % Nodal forces allow rotation of cube

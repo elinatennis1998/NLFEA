@@ -1,10 +1,10 @@
 % computes the shape function for the 
 
 function [zetaX,zeta,NmatM,dx,dy] = compute_zeta3(xlR,xlL,ulresM,xlresM)
-% dx =  (xlR(1,2)- xlL(1,1));
-% dy =  (xlR(2,2) - xlL(2,1));
-dx =  abs(xlR(1,2)- xlL(1,1));
-dy =  abs(xlR(2,2) - xlL(2,1));
+dx =  (xlR(1,2)- xlL(1,1));
+dy =  (xlR(2,2) - xlL(2,1));
+% dx =  abs(xlR(1,2)- xlL(1,1));
+% dy =  abs(xlR(2,2) - xlL(2,1));
 
  
      if dx == xlresM(1)
