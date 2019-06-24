@@ -5,10 +5,10 @@ clc
 PSPS = 's'; %plane stress condition 
 nen = 4;3; %number of nodes per element
 nel = 4;3; %max number of nodes per element
-numgh = 4;5;3;8;7;6; %number of grains along horiz. edge
-numgs = 4;5;3;8;7;6; %number of grains along later. edge
+numgh = 4;3;5;8;7;6; %number of grains along horiz. edge
+numgs = 4;3;5;8;7;6; %number of grains along later. edge
 numgrain = numgh*numgs; %total number of grains in RVE
-bCrys = 2;1;8;3; %number of elem. along grain edge
+bCrys = 2;3;8;1; %number of elem. along grain edge
 tfact = 1;2; %tri 2, quad 1; 
 numelemg = bCrys^2; %number of elements in a grain
 nu = numgh*bCrys; %number of elements along x
@@ -32,37 +32,6 @@ NodesOnElement = NodesOnElement';
 NodesOnElement_PBC = NodesOnElement;
 
 %% Map element ID onto grain ID
-%Assign individual region to each grain 
-% for each grain, which elements belong to it
-grainG = zeros(numgrain,numelemg*tfact);
-grain = 0;
-% % for each grain, which elements belong to it
-% for j = 1:numgs
-%     for i = 1:numgh
-%         el = 0;
-%         grain = grain + 1;
-%         for m = 1:bCrys
-%             for l = 1:bCrys*tfact
-%                 if nel == 3
-%                     elem = (j-1)*nu*bCrys*(j*tfact-2*(j-1))+(i-1)*bCrys*tfact; % bottom-corner element of grain
-%                     elem = elem + (m-1)*nu*tfact;
-%                     elem = elem + (l-1) + 1;
-%                 elseif nel == 4
-%                     elem = (j-1)*nu*bCrys+(i-1)*bCrys;
-%                     elem = elem + (m-1)*nu*tfact;
-%                     elem = elem + (l-1) + 1;
-%                 end
-%                 el = el + 1;
-%                 grainG(grain,el) = elem;
-%             end
-%         end
-%     end
-% end
-% % inverse map: the grain that an element belongs to
-%     for g = 1:numgrain
-%         RegionOnElement(grainG(g,:)) = g;
-%     end
-
 rsinc=nu*nv;
 refine=[1 2 4 8 16 32 64]';
 m=size(refine,1);
@@ -86,15 +55,16 @@ m=size(refine,1);
     i=i+bCrys*4;   
  end
  
- % the first material at the top
+% the first material at the top
 RegionOnElement(rsinc-startRegion+1:rsinc)=ones(1,startRegion); 
-%% Set up phase pattern and material properties
+% Set up phase pattern and material properties
 nummat = 2; %Number of materials for MRDG elements
 nummat_PBC = nummat; %Number of materials for PBC elements
 MatTypeTable = [1 2
                 1 1];
 MateT = [100 0.25 1
-         100 0.25 1]; %Material properties
+         300 0.3 1]; %Material properties
+
 %% provide flags for desired outputs
 OptFlag = [0 1 1 0 0 1 1]'; 
 SEHist = 1;
@@ -151,7 +121,7 @@ numnpCG = numnp;
 NodesOnElement = NodesOnElement_PBC;
 numel = numelCG;
 usePBC = 2; % flag to turn on keeping PBC
-InterTypes = zeros(2,2); % only put CZM between the element edges between materials 1-2
+InterTypes = zeros(nummat,nummat); % only put CZM between the element edges between materials 1-2
 DEIProgram2 %PBC case
 ndm = 2;
 
@@ -224,7 +194,6 @@ numel_MRDG = numel; %Number of elements for MRDG case
 pencoeff = 1e9;
 CornerXYZ = [4.000000 0.000000
              0.000000 4.000000];
-
 %I need to eliminate meso-scale to get PBC condition like Sunday's
 %% InterDGallG for PBC with modifications
  for mat2 = 1:nummatCG
@@ -282,7 +251,7 @@ NodesOnElement = [NodesOnElement(1:numel_MRDG,1:nen)
 GrainIntegV
 InterIntegV
 uRVE = [0 0];
-eRVE = [0.1 0 0];
+eRVE = [.02 -0.02*.25 0];
 wRVE = 0;
 
 %Need to manually insert material type for PBC condition
@@ -292,8 +261,8 @@ matPBC(1:nummat-nummat_MRDG,3:4) = [4.*ones(nummat-nummat_MRDG,1) 4.*ones(nummat
 MateT = [MateT(1:nummat_MRDG,:)
     [matPBC]];
 
-NodeLoad2 = [MPC_BCx 1 0.1
-    MPC_BCx 2 0
+NodeLoad2 = [MPC_BCx 1 0
+    MPC_BCx 2 0.2
     MPC_BCy 1 0
     MPC_BCy 2 0];
 NodeBC = [NodeBC; NodeLoad2];

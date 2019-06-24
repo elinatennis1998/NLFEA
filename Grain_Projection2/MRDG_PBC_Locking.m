@@ -5,10 +5,10 @@ clc
 PSPS = 's'; %plane stress condition 
 nen = 4;3; %number of nodes per element
 nel = 4;3; %max number of nodes per element
-numgh = 4;5;3;8;7;6; %number of grains along horiz. edge
-numgs = 4;5;3;8;7;6; %number of grains along later. edge
+numgh = 3;4;5;8;7;6; %number of grains along horiz. edge
+numgs = 3;4;5;8;7;6; %number of grains along later. edge
 numgrain = numgh*numgs; %total number of grains in RVE
-bCrys = 2;1;8;3; %number of elem. along grain edge
+bCrys = 1;2;8;3; %number of elem. along grain edge
 tfact = 1;2; %tri 2, quad 1; 
 numelemg = bCrys^2; %number of elements in a grain
 nu = numgh*bCrys; %number of elements along x
@@ -34,69 +34,43 @@ NodesOnElement_PBC = NodesOnElement;
 %% Map element ID onto grain ID
 %Assign individual region to each grain 
 % for each grain, which elements belong to it
-% grainG = zeros(numgrain,numelemg*tfact);
-% grain = 0;
-% % for each grain, which elements belong to it
-% for j = 1:numgs
-%     for i = 1:numgh
-%         el = 0;
-%         grain = grain + 1;
-%         for m = 1:bCrys
-%             for l = 1:bCrys*tfact
-%                 if nel == 3
-%                     elem = (j-1)*nu*bCrys*(j*tfact-2*(j-1))+(i-1)*bCrys*tfact; % bottom-corner element of grain
-%                     elem = elem + (m-1)*nu*tfact;
-%                     elem = elem + (l-1) + 1;
-%                 elseif nel == 4
-%                     elem = (j-1)*nu*bCrys+(i-1)*bCrys;
-%                     elem = elem + (m-1)*nu*tfact;
-%                     elem = elem + (l-1) + 1;
-%                 end
-%                 el = el + 1;
-%                 grainG(grain,el) = elem;
-%             end
-%         end
-%     end
-% end
+grainG = zeros(numgrain,numelemg*tfact);
+grain = 0;
+% for each grain, which elements belong to it
+for j = 1:numgs
+    for i = 1:numgh
+        el = 0;
+        grain = grain + 1;
+        for m = 1:bCrys
+            for l = 1:bCrys*tfact
+                if nel == 3
+                    elem = (j-1)*nu*bCrys*(j*tfact-2*(j-1))+(i-1)*bCrys*tfact; % bottom-corner element of grain
+                    elem = elem + (m-1)*nu*tfact;
+                    elem = elem + (l-1) + 1;
+                elseif nel == 4
+                    elem = (j-1)*nu*bCrys+(i-1)*bCrys;
+                    elem = elem + (m-1)*nu*tfact;
+                    elem = elem + (l-1) + 1;
+                end
+                el = el + 1;
+                grainG(grain,el) = elem;
+            end
+        end
+    end
+end
 % % inverse map: the grain that an element belongs to
-%     for g = 1:numgrain
-%         RegionOnElement(grainG(g,:)) = g;
-%     end
-
-rsinc=nu*nv;
-refine=[1 2 4 8 16 32 64]';
-m=size(refine,1);
- 
- for i=1:m
-     if bCrys == refine(i);
-        pow_r=i;
-     end
- end
- startRegion=numgh^pow_r+bCrys;
- 
- % stuck the material atthe bottom
- RegionOnElement(1:startRegion,1)=ones(1,startRegion);
- 
- % stuck in the second material in the middle
- i=startRegion+1;
- while i < rsinc-startRegion+1
-     
-  RegionOnElement(i:i+bCrys*2-1,1)=2*ones(1,bCrys*2);
-  RegionOnElement(i+bCrys*2:i+bCrys*4-1,1)= ones(1,bCrys*2);
-    i=i+bCrys*4;   
- end
- 
-% the first material at the top
-% RegionOnElement(rsinc-startRegion+1:rsinc)=ones(1,startRegion); 
-RegionOnElement = [1;1;1;1;1;1;1;1;1;2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;...
-    2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;1;1;1;1;1;1;1];
-% Set up phase pattern and material properties
-nummat = 2; %Number of materials for MRDG elements
-nummat_PBC = nummat; %Number of materials for PBC elements
-MatTypeTable = [1 2
-                1 1];
-MateT = [100 0.25 1
-         100 0.3 1]; %Material properties
+    for g = 1:numgrain
+        RegionOnElement(grainG(g,:)) = g;
+    end
+%% Set up phase pattern and material properties
+MatTypeTable = [1:numgrain; ones(1,numgrain)];
+m2 = [200 0.25 1]; %material type 1
+m1 = [100 0.3 1]; %material type 2
+mats = [m1; m2];
+alterphase = 2*rem(1:numgrain,2) - 1;
+alterphase(alterphase==-1) = 2;
+MateT = mats(alterphase,:);%% Output quantity flags
+nummat = numgrain;
 
 %% provide flags for desired outputs
 OptFlag = [0 1 1 0 0 1 1]'; 
@@ -154,7 +128,8 @@ numnpCG = numnp;
 NodesOnElement = NodesOnElement_PBC;
 numel = numelCG;
 usePBC = 2; % flag to turn on keeping PBC
-InterTypes = zeros(2,2); % only put CZM between the element edges between materials 1-2
+InterTypes = tril(ones(nummat),-1);
+% InterTypes = zeros(nummat,nummat); % only put CZM between the element edges between materials 1-2
 DEIProgram2 %PBC case
 ndm = 2;
 
@@ -165,7 +140,7 @@ NodesOnElement = NodesOnElement_MRDG;
 numel = numel_MRDG;
 nen = nen_MRDG;
 numnpCG = numnp;
-InterTypes = tril(ones(nummat),-1); % only put CZM between the element edges between materials 1-2
+% InterTypes = tril(ones(nummat),-1); % only put CZM between the element edges between materials 1-2
 ielI = 10; %MRDG elements on the interior
 ielB = 9;  %PBC case on the boundary 
 matepropI = [0 0 1 1]; %Meso case for interface 
@@ -174,11 +149,12 @@ matepropB = [0 1 1 0]; %Miscro case
 % InterDGallG was separated for two cases: MRDG and PBC
 %% InterDGallG for MRDG
 nummatCG = nummat;
+nummat_PBC = nummat;
 numSI = numCL;
 numelCG = numel;
 nen_bulk = nen;
 SurfacesI = zeros(0,8);
-numSI = 0;
+% numSI = 0;
 % Interface region information: [materialID in MateT; mat1; mat2; regI; first coupler number; last coupler number]
 RegionsOnInterface = zeros(nummat*(nummat+1)/2,6);
 
@@ -226,36 +202,72 @@ numel_MRDG = numel; %Number of elements for MRDG case
 %% PBC Treatment
 pencoeff = 1e9;
 CornerXYZ = [4.000000 0.000000
-             0.000000 4.000000];
-
+             0.000000 4.000000]; 
+% numEonPBC = [16; zeros(15,1)];
 %I need to eliminate meso-scale to get PBC condition like Sunday's
 %% InterDGallG for PBC with modifications
- for mat2 = 1:nummatCG
-    for mat1 = mat2:mat2
+%  for mat2 = 1:nummatCG
+%     for mat1 = mat2:mat2
+%         matI = GetRegionsInt(mat1,mat2);
+%         numSIi = numEonPBC(matI);
+%         locF = FacetsOnPBCNum(matI):(FacetsOnPBCNum(matI+1)-1);
+%         facs = FacetsOnPBC(locF);
+%         SurfacesIi = ElementsOnFacet(facs,:);
+%         SurfacesIi = ReverseFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
+%         ElementsOnFacet(facs,:) = SurfacesIi;
+%         SurfacesI(numSI+1:numSI+numSIi,5:8) = SurfacesIi;
+%         [SurfacesIi,subFacets] = SplitFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
+%         numSI = numSI + numSIi;
+%         for j = 1:size(subFacets,1)
+%             numel_old = numel;
+%             numSIii = subFacets(j,2) - subFacets(j,1) + 1;
+%             SurfacesIii = SurfacesIi(subFacets(j,1):subFacets(j,2),:);
+%             [NodesOnElement,RegionOnElement,nen,numel,nummat,MatTypeTable,MateT,CoordinatesB,numnpB] = ...
+%              FormDGG(SurfacesIii,NodesOnElement,RegionOnElement,Coordinates,numnpMicro,0,numSIii,nen_bulk,ndm,numel,nummat,6, ...
+%                     ielB,0,matepropB,MatTypeTable,MateT,CoordinatesB,numnpB,2);
+%             if numel > numel_old
+%             RegionsOnInterface(nummat-nummatCG,:) = [nummat mat1 mat2 matI numel_old+1 numel];
+%             end
+%         end
+%     end
+% end
+
+nummatCG = nummat_PBC;
+numSI = numCL;
+numelCG = numel;
+nen_bulk = nen;
+SurfacesI = zeros(0,8);
+numSI = 0;
+% Arrays for new MPC links being formed
+MPCListNew = zeros(0,2+ndm);
+numMPCnew = 0;
+CouplerNodes = zeros(0,1); % extra nodes for MPC-CZ
+NodesOnLinkNew = zeros(4,numnp);
+NodesOnLinknumNew = zeros(numnp,1);
+% Interface region information: [materialID in MateT; mat1; mat2; regI; first coupler number; last coupler number]
+% RegionsOnInterface = zeros(nummat*(nummat+1)/2,6);
+
+for mat2 = 1:nummatCG
+    for mat1 = 1:mat2
         
         matI = GetRegionsInt(mat1,mat2);
         numSIi = numEonPBC(matI);
-        locF = FacetsOnPBCNum(matI):(FacetsOnPBCNum(matI+1)-1);
-        facs = FacetsOnPBC(locF);
-        SurfacesIi = ElementsOnFacet(facs,:);
-        SurfacesIi = ReverseFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
-        ElementsOnFacet(facs,:) = SurfacesIi;
-        SurfacesI(numSI+1:numSI+numSIi,5:8) = SurfacesIi;
-        [SurfacesIi,subFacets] = SplitFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
-        numSI = numSI + numSIi;
-        for j = 1:size(subFacets,1)
+            locF = FacetsOnPBCNum(matI):(FacetsOnPBCNum(matI+1)-1);
+            facs = FacetsOnPBC(locF);
+            SurfacesIi = ElementsOnFacet(facs,:);
+            SurfacesIi = ReverseFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
+            ElementsOnFacet(facs,:) = SurfacesIi;
+            SurfacesI(numSI+1:numSI+numSIi,5:8) = SurfacesIi;
             numel_old = numel;
-            numSIii = subFacets(j,2) - subFacets(j,1) + 1;
-            SurfacesIii = SurfacesIi(subFacets(j,1):subFacets(j,2),:);
-            [NodesOnElement,RegionOnElement,nen,numel,nummat,MatTypeTable,MateT,CoordinatesB,numnpB] = ...
-             FormDGG(SurfacesIii,NodesOnElement,RegionOnElement,Coordinates,numnpMicro,0,numSIii,nen_bulk,ndm,numel,nummat,6, ...
-                    ielB,0,matepropB,MatTypeTable,MateT,CoordinatesB,numnpB,2);
-            if numel > numel_old
+        [NodesOnElement,RegionOnElement,nen,numel,nummat,MatTypeTable,MateT] = ...
+         FormDG(SurfacesIi,NodesOnElement,RegionOnElement,Coordinates,numSIi,nen_bulk,ndm,numel,nummat,6, ...
+                9,0,[0],MatTypeTable,MateT);
+        if numel > numel_old
             RegionsOnInterface(nummat-nummatCG,:) = [nummat mat1 mat2 matI numel_old+1 numel];
-            end
         end
     end
 end
+
 RegionsOnInterface = RegionsOnInterface(1:nummat-nummatCG,:);
 MaterTypeNum(4) = nummat+1;
 
@@ -282,6 +294,7 @@ zrt(1:num_ins,1:2) = [MPC_BCx.*ones(num_ins,1) MPC_BCy.*ones(num_ins,1)];
 NodesOnElement = [NodesOnElement(1:numel_MRDG,1:nen)
                 [NodesOnElement(numel_MRDG+1:numel,1:nen_MRDG) zrt]]; 
 %% RVE/macroscale BC
+nummatCG = nummat_PBC;
 GrainIntegV
 InterIntegV
 uRVE = [0 0];
@@ -289,21 +302,22 @@ eRVE = [.02 -0.02*.25 0];
 wRVE = 0;
 
 %Need to manually insert material type for PBC condition
-matPBC = zeros(nummat-nummat_MRDG,length(MateT));
+% matPBC = zeros(nummat-nummat_MRDG,length(MateT));
+matPBC = zeros(nummat-nummat_MRDG,8);
 matPBC(1:nummat-nummat_MRDG,1:2) = [ones(nummat-nummat_MRDG,1) ones(nummat-nummat_MRDG,1)];
 matPBC(1:nummat-nummat_MRDG,3:4) = [4.*ones(nummat-nummat_MRDG,1) 4.*ones(nummat-nummat_MRDG,1)];
 MateT = [MateT(1:nummat_MRDG,:)
     [matPBC]];
 
-NodeLoad2 = [MPC_BCx 1 0
-    MPC_BCx 2 0.2
+NodeLoad2 = [MPC_BCx 1 0.2
+    MPC_BCx 2 0
     MPC_BCy 1 0
     MPC_BCy 2 0];
 NodeBC = [NodeBC; NodeLoad2];
 numBC = length(NodeBC);
 
 %% Key Part: set up fluxes and jumps on the grain boundaries and RVE
-TFS = 1; %Taylor 2; % FE 3; % Sachs  4; % Combo 5; % Fine Scale  
+TFS = 2; % FE 1; %Taylor 3; % Sachs  4; % Combo 5; % Fine Scale  
 factorTS = 1;0;.5;.25;.75; % factor for Taylor vs Sachs; 1 means Taylor
 factorT = factorTS;1/3;
 factorS = 1-factorTS;1/3;
@@ -313,4 +327,19 @@ CoordinatesI=CoordinatesIT;
 end
 % FormRVEDirichlet
 
+%% Locking Grains
+locked_g = [5];
+% %     for j = 1:numgrain
+% %         locked_g(1,j) = j;
+% %     end
+%     for k = 1: numgrain 
+%         MateT(k,4) = GrainVol(1,k)/ MateT(k,3); %Grain area
+%     end 
+num_locked_g = length(locked_g); 
+meso_nen = 3; %Number of nodes per mose element
+sub = 11; %subroutine number for a meso element
+combo = 1; %Flag for plotting FS on CS
+
+[NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement);
 ProbType = [numnp numel nummat ndm ndm nen];

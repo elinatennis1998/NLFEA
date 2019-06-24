@@ -137,13 +137,13 @@ factorT = factorTS;1/3;
 factorS = 1-factorTS;1/3;
 if TFS == 1
 % factorTS = 1;
-% TaylorSet
+TaylorSet
 elseif TFS == 3
 % factorTS = 0;
-% SachsSet
+SachsSet
 elseif TFS == 4
 % TaylorSet
-% SachsSet
+SachsSet
 elseif TFS == 5
 load('CoordinatesIT.mat');
 CoordinatesI=CoordinatesIT;

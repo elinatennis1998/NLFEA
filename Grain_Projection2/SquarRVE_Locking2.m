@@ -8,10 +8,10 @@ clc
 PSPS = 's'; %plane stress condition 
 nen = 4;3; %number of nodes per element
 nel = 4;3; %max number of nodes per element
-numgh = 4;3;8;5;7;6; %number of grains along horiz. edge
-numgs = 4;3;8;5;7;6; %number of grains along later. edge
+numgh = 3;4;8;5;7;6; %number of grains along horiz. edge
+numgs = 3;4;8;5;7;6; %number of grains along later. edge
 numgrain = numgh*numgs; %total number of grains in RVE
-bCrys = 2;1;8;3; %number of elem. along grain edge
+bCrys = 1;2;8;3; %number of elem. along grain edge
 tfact = 1;2; %tri 2, quad 1; 
 numelemg = bCrys^2; %number of elements in a grain
 nu = numgh*bCrys; %number of elements along x
@@ -21,7 +21,7 @@ Coordinates = [1 0 0
              2 4 0
              4 0 4
              3 4 4];
-% GrainA = ((abs(Coordinates(1,2))+abs(Coordinates(4,2)))/numgs)^2; %For Square RVE
+GrainA = ((abs(Coordinates(1,2))+abs(Coordinates(4,2)))/numgs)^2; %For Square RVE
 % GrainA = ((abs(Coordinates(1,2))+abs(Coordinates(4,2)))/numgs)*((abs(Coordinates(2,2))+abs(Coordinates(3,2)))/numgh);
 node1 = 1;
 elmt1 = 1;
@@ -130,18 +130,20 @@ FormRVEDirichlet
 % locked_g = [1 2 3 4 5 6 10 11 15 16 20 21 22 23 24 25]; %gives issues
 % locked_g = [1 2 3 4 5]; %gives issues 
 % locked_g = [7 8 9 12 13 14 17 18 19];
-locked_g = [6];
-% %     for j = 1:numgrain
-% %         locked_g(1,j) = j;
-% %     end
-    for k = 1: numgrain 
-        MateT(k,4) = GrainVol(1,k)/ MateT(k,3); %Grain area
-    end 
+locked_g = [5];
+% % %     for j = 1:numgrain
+% % %         locked_g(1,j) = j;
+% % %     end
+%     for k = 1: numgrain 
+%         MateT(k,4) = GrainVol(1,k)/ MateT(k,3); %Grain area
+%     end 
 num_locked_g = length(locked_g); 
 meso_nen = 3; %Number of nodes per mose element
 sub = 11; %subroutine number for a meso element
 combo = 1; %Flag for plotting FS on CS
-
-[NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel,ccell] = Meso_Locking(NodesOnElement,num_locked_g,NodeBC,locked_g,....
-    meso_nen,grainG,nen_bulk,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement,sub,bCrys,tfact);
+% 
+[NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement);
+% [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel,ccell] = Meso_Locking(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+%     meso_nen,grainG,nen_bulk,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement,sub,bCrys,tfact);
 ProbType = [numnp numel nummat 2 2 nen];

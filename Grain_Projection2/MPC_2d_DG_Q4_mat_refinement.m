@@ -9,6 +9,7 @@ clear
 % clc
 format long
 neper_abaqus=0;
+PSPS = 's';
 nen = 4;
 nel = 4;
 div=2;%%2,4,8,16,32
@@ -54,7 +55,8 @@ m=size(refine,1);
  
  % the first material at the top
 RegionOnElement(rsinc-startRegion+1:rsinc)=ones(1,startRegion); 
-
+% RegionOnElement = [1;1;1;1;1;1;1;1;1;2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;...
+%     2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;2;2;2;2;2;2;1;1;1;1;1;1;1;1;1];
 %  RegionOnElement = ones(numel,1)
 
 nummat = 2;
@@ -70,7 +72,7 @@ TOP = (numc*div+1)*(numc*div)+1; %y
 TOPRIGHT = TOP + RIGHT - 1; %xy
 NodeBC = [FIX 1 0
           FIX 2 0
-%           RIGHT 1 0.01
+%           RIGHT 1 0
 %           RIGHT 2 0
 %           TOP 1 0
 %           TOP 2 0

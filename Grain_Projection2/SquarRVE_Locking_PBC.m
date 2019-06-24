@@ -7,10 +7,10 @@ clear
 PSPS = 's'; %plane stress condition 
 nen = 4;3; %number of nodes per element
 nel = 4;3; %max number of nodes per element
-numgh = 4;3;5;7;6; %number of grains along horiz. edge
-numgs = 4;3;5;7;6; %number of grains along later. edge
+numgh = 3;4;5;7;6; %number of grains along horiz. edge
+numgs = 3;4;5;7;6; %number of grains along later. edge
 numgrain = numgh*numgs; %total number of grains in RVE
-bCrys = 2;3;1; %number of elem. along grain edge
+bCrys = 1;2;3; %number of elem. along grain edge
 tfact = 1;2; %tri 2, quad 1; 
 numelemg = bCrys^2; %number of elements in a grain
 nu = numgh*bCrys; %number of elements along x
