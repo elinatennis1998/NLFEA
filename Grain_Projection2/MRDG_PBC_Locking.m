@@ -64,8 +64,8 @@ end
     end
 %% Set up phase pattern and material properties
 MatTypeTable = [1:numgrain; ones(1,numgrain)];
-m2 = [200 0.25 1]; %material type 1
-m1 = [100 0.3 1]; %material type 2
+m2 = [100 0.25 1]; %material type 1
+m1 = [100 0.25 1]; %material type 2
 mats = [m1; m2];
 alterphase = 2*rem(1:numgrain,2) - 1;
 alterphase(alterphase==-1) = 2;
@@ -206,31 +206,6 @@ CornerXYZ = [4.000000 0.000000
 % numEonPBC = [16; zeros(15,1)];
 %I need to eliminate meso-scale to get PBC condition like Sunday's
 %% InterDGallG for PBC with modifications
-%  for mat2 = 1:nummatCG
-%     for mat1 = mat2:mat2
-%         matI = GetRegionsInt(mat1,mat2);
-%         numSIi = numEonPBC(matI);
-%         locF = FacetsOnPBCNum(matI):(FacetsOnPBCNum(matI+1)-1);
-%         facs = FacetsOnPBC(locF);
-%         SurfacesIi = ElementsOnFacet(facs,:);
-%         SurfacesIi = ReverseFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
-%         ElementsOnFacet(facs,:) = SurfacesIi;
-%         SurfacesI(numSI+1:numSI+numSIi,5:8) = SurfacesIi;
-%         [SurfacesIi,subFacets] = SplitFacets(SurfacesIi,NodesOnElement,Coordinates,numSIi,ndm);
-%         numSI = numSI + numSIi;
-%         for j = 1:size(subFacets,1)
-%             numel_old = numel;
-%             numSIii = subFacets(j,2) - subFacets(j,1) + 1;
-%             SurfacesIii = SurfacesIi(subFacets(j,1):subFacets(j,2),:);
-%             [NodesOnElement,RegionOnElement,nen,numel,nummat,MatTypeTable,MateT,CoordinatesB,numnpB] = ...
-%              FormDGG(SurfacesIii,NodesOnElement,RegionOnElement,Coordinates,numnpMicro,0,numSIii,nen_bulk,ndm,numel,nummat,6, ...
-%                     ielB,0,matepropB,MatTypeTable,MateT,CoordinatesB,numnpB,2);
-%             if numel > numel_old
-%             RegionsOnInterface(nummat-nummatCG,:) = [nummat mat1 mat2 matI numel_old+1 numel];
-%             end
-%         end
-%     end
-% end
 
 nummatCG = nummat_PBC;
 numSI = numCL;
@@ -309,7 +284,7 @@ matPBC(1:nummat-nummat_MRDG,3:4) = [4.*ones(nummat-nummat_MRDG,1) 4.*ones(nummat
 MateT = [MateT(1:nummat_MRDG,:)
     [matPBC]];
 
-NodeLoad2 = [MPC_BCx 1 0.2
+NodeLoad2 = [MPC_BCx 1 -0.2
     MPC_BCx 2 0
     MPC_BCy 1 0
     MPC_BCy 2 0];
@@ -328,18 +303,19 @@ end
 % FormRVEDirichlet
 
 %% Locking Grains
-locked_g = [5];
-% %     for j = 1:numgrain
-% %         locked_g(1,j) = j;
-% %     end
-%     for k = 1: numgrain 
-%         MateT(k,4) = GrainVol(1,k)/ MateT(k,3); %Grain area
-%     end 
-num_locked_g = length(locked_g); 
-meso_nen = 3; %Number of nodes per mose element
-sub = 11; %subroutine number for a meso element
-combo = 1; %Flag for plotting FS on CS
-
-[NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
-    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement);
+% locked_g = [5];
+% % %     for j = 1:numgrain
+% % %         locked_g(1,j) = j;
+% % %     end
+% %     for k = 1: numgrain 
+% %         MateT(k,4) = GrainVol(1,k)/ MateT(k,3); %Grain area
+% %     end 
+% num_locked_g = length(locked_g); 
+% meso_nen = 3; %Number of nodes per mose element
+% sub = 11; %subroutine number for a meso element
+% nen_bulk = 4; %Reset variables for locking case
+% % combo = 1; %Flag for plotting FS on CS
+% 
+% [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+%     meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement);
 ProbType = [numnp numel nummat ndm ndm nen];
