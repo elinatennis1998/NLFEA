@@ -94,8 +94,8 @@ InterDGallG
 
 %% RVE/macroscale BC
 uRVE = [0 0];
-eRVE = [.02 -0.02*.25 0];
-% eRVE = [.1 0 0];
+% eRVE = [.02 -0.02*.25 0];
+eRVE = [0.1 0 0];
 wRVE = 0;
 GrainIntegV
 InterIntegV
@@ -130,16 +130,16 @@ FormRVEDirichlet
 % locked_g = [1 2 3 4 5]; %gives issues 
 % locked_g = [7 8 9 12 13 14 17 18 19];
 % locked_g = [5];
-% % % %     for j = 1:numgrain
-% % % %         locked_g(1,j) = j;
-% % % %     end
+%     for j = 1:numgrain
+%         locked_g(1,j) = j;
+%     end
 % %     for k = 1: numgrain 
 % %         MateT(k,4) = GrainVol(1,k)/ MateT(k,3); %Grain area
 % %     end 
 % num_locked_g = length(locked_g); 
 % meso_nen = 3; %Number of nodes per mose element
 % sub = 11; %subroutine number for a meso element
-% combo = 1; %Flag for plotting FS on CS
+% combo = 0; %Flag for plotting FS on CS
 % % 
 % [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
 %     meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement);
