@@ -272,3 +272,25 @@ Node_U_V = zeros(numnp,ndf)';
 Node_U_V(DOFa) = ModelDx(NDOFT2(DOFa));
 Node_U_V(DOFi) = gBC(NDOFT2(DOFi)-neq);
 Node_U_V = Node_U_V';
+
+
+%% MRDG Fine Scale and Coarse Scale Results
+
+%Per Grain 
+GrainDispA = zeros(numnp,ndf);
+for k = 1:numelCG
+    var = NodesOnElement(k,1:nnz(NodesOnElement(k,:)));
+%     for l = 1:numelCG
+        for m = 1:length(var)
+            GrainDispA(var(m),1) = GrainDisp_st(1,k);
+            GrainDispA(var(m),2) = GrainDisp_st(2,k);
+        end
+%     end
+end
+GrainDispA;
+
+DispFine = Node_U_V-GrainDispA;
+
+% Store MRDG Variables 
+save('DispFine','DispFine');
+save('Node_U_V','Node_U_V');
