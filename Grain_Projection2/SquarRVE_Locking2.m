@@ -59,9 +59,9 @@ matepropB = [0 1 1 0];
 InterDGallG
 
 %% RVE/macroscale BC
-uRVE = [0 0];
+uRVE = [1 0];
 % eRVE = [.02 -0.02*.25 0];
-eRVE = [0.2 0 0];
+eRVE = [0.5 0 0];
 wRVE = 0;
 GrainIntegV
 InterIntegV

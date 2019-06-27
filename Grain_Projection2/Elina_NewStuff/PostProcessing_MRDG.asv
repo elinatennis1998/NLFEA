@@ -1,16 +1,14 @@
+%Elina Geut 
+%6/27/2019
+% Compute Displacement and Traction Jumps for MRDG case
 
-% Average displacement and strain for linear elements 
+load('Node_U_V','Node_U_V');
 load('GrainEps','GrainEps');
-load('GrainVol','GrainVol');
-load('Node_U_V','Node_U_V'); 
+load('GrainDisp','GrainDisp');
+load('GrainVol','GrainVol'); 
 
-%Gerring the displacement average for each grain (not
-for k = 1:numelCG
-    var = NodesOnElement(k,1:nnz(NodesOnElement(k,:)));
-    for m = 1:length(var)
-        Displ_x(m) = Node_U_V(var(m),1);
-        Displ_y(m) = Node_U_V(var(m),2);
-    end
-    GrainDispA(k,1) = sum(Displ_x)/nen_bulk;
-    GrainDispA(k,2) = sum(Displ_y)/nen_bulk;
-end
+%Calculating Grain average based on Dr. Truster's notes
+U_g(1,:) = GrainDisp(1,:) + GrainEps(1,:).*GrainXmid(1,:);
+U_g(2,:) = GrainDisp(2,:) + GrainEps(2,:).*GrainXmid(2,:);
+
+%Subtract U_g from the 
