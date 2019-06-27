@@ -1,4 +1,4 @@
-% Patch test for rectangular domain of Q9 elements with DG couplers along
+% Rectangular domain of Q9 elements with CZ couplers along
 % interfaces between regions. User can modify the elements belonging to
 % each region.
 % Domain: 2x1 rectangle
@@ -43,6 +43,9 @@ numBC = length(NodeBC);
 RegionOnElement(1:2) = 3;
 RegionOnElement(3:4) = 2;
 RegionOnElement(7:8) = 2;
+RegionOnElement(1:3:7) = 1;
+RegionOnElement(2:3:8) = 2;
+RegionOnElement(3:3:9) = 3;
 nummat = 3;
 MatTypeTable = [1 2 3; 1 1 1];
 MateT = [1 1 1]'*[190e3 0.3 1];
@@ -62,13 +65,17 @@ ndm = 2;
 [NodesOnElement,RegionOnElement,Coordinates,numnp,Output_data] ...
     = DEIPFunction(InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm);
 
+
 % Update boundary conditions
 NodeBCCG = NodeBC;
 numBCCG = numBC;
 [NodeBC,numBC] = UpdateNodeSetFunction(0,RegionOnElement,Output_data,NodeBCCG,numBCCG);
 
-% Insert DG couplers
+% Insert CZ couplers
+% CZ element stiffness
+CZprop = 50000;
+
 [NodesOnElement,RegionOnElement,Coordinates,numnp,nen,numel,nummat,MateT,MatTypeTable,NodeTypeNum,RegionsOnInterface...
-] = InterFunction(2,InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm,Output_data,0,MateT,MatTypeTable);
+] = InterFunction(1,InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm,Output_data,CZprop,MateT,MatTypeTable);
 
 ProbType = [numnp numel nummat 2 2 nen];

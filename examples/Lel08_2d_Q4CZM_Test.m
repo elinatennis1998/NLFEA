@@ -1,4 +1,4 @@
-% Patch test for rectangular domain of Q9 elements with DG couplers along
+% Rectangular domain of Q4 elements with CZ couplers along
 % interfaces between regions. User can modify the elements belonging to
 % each region.
 % Domain: 2x1 rectangle
@@ -9,8 +9,8 @@
 clear
 % clc
 
-nen = 9;
-nel = 9;
+nen = 4;
+nel = 4;
 % Mesh with 6x6 tiling
 nu = 6;
 nv = 6;
@@ -26,7 +26,7 @@ node1 = 1;
 elmt1 = 1;
 mat = 1;
 rskip = 0;
-btype = 9;
+btype = 0;
 [Coordinates,NodesOnElement,RegionOnElement,numnp,numel] = block2d(type,rinc,sinc,node1,elmt1,mat,rskip,btype,Coordinates,nen);
 Coordinates = Coordinates';
 NodesOnElement = NodesOnElement';
@@ -40,9 +40,12 @@ NodeBC = [nodexm 1*ones(length(nodexm),1) zeros(length(nodexm),1)
           nodeym 2*ones(length(nodeym),1) zeros(length(nodeym),1)];
 numBC = length(NodeBC);
 
-RegionOnElement(1:2) = 3;
-RegionOnElement(3:4) = 2;
-RegionOnElement(7:8) = 2;
+% RegionOnElement(1:2) = 3;
+% RegionOnElement(3:4) = 2;
+% RegionOnElement(7:8) = 2;
+RegionOnElement(1:6:30+1) = 3;
+RegionOnElement(2:6:30+2) = 1;
+RegionOnElement(3:6:30+3) = 2;
 nummat = 3;
 MatTypeTable = [1 2 3; 1 1 1];
 MateT = [1 1 1]'*[190e3 0.3 1];
@@ -62,13 +65,17 @@ ndm = 2;
 [NodesOnElement,RegionOnElement,Coordinates,numnp,Output_data] ...
     = DEIPFunction(InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm);
 
+
 % Update boundary conditions
 NodeBCCG = NodeBC;
 numBCCG = numBC;
 [NodeBC,numBC] = UpdateNodeSetFunction(0,RegionOnElement,Output_data,NodeBCCG,numBCCG);
 
-% Insert DG couplers
+% Insert CZ couplers
+% CZ element stiffness
+CZprop = 50000;
+
 [NodesOnElement,RegionOnElement,Coordinates,numnp,nen,numel,nummat,MateT,MatTypeTable,NodeTypeNum,RegionsOnInterface...
-] = InterFunction(2,InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm,Output_data,0,MateT,MatTypeTable);
+] = InterFunction(1,InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm,Output_data,CZprop,MateT,MatTypeTable);
 
 ProbType = [numnp numel nummat 2 2 nen];

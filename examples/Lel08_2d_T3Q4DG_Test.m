@@ -1,7 +1,9 @@
-% Tim Truster
-% 06/29/2015
+% Moderate example of insertion of couplers using DEIProgram2. Less
+% complex version of interfaces in domain; insertion of DG
+% couplers on region interfaces
+% Loading: Displacement of 0.1 on right edge
 %
-% Complex 2d mesh to test CGtoDG; consists of T3 and Q4 regions
+% Last revision: 06/20/2017 TJT
 
 % Element refinement numbers
 n1 = 8;
@@ -82,17 +84,18 @@ NodeBC = [nodexm 1*ones(length(nodexm),1) zeros(length(nodexm),1)
 numBC = length(NodeBC);
 
 %% Assign materials to particular elements; can be modified
-nen1 = nen + 1;
 RegionOnElement(1:2) = 3;
 RegionOnElement(3:4) = 2;
 RegionOnElement(7:8) = 2;
 nummat = 3;
 MatTypeTable = [1 2 3
-                1 1 1
-                0 0 0];
+                1 1 1];
 MateT = ones(nummat,1)*[100e3 0.25 1];
-AlgoType = [0; 1; 0];
-OptFlag = [0 1 1 0 0 1 1 1]';
+% Output quantity flags
+DHist = 1;
+FHist = 1;
+SHist = 1;
+SEHist = 1;
 
 %% Insert interface elements
 % Generate CZM interface: pairs of elements and faces, duplicate the nodes,
@@ -101,26 +104,18 @@ numnpCG = numnp;
 InterTypes = [0 0 0
               1 0 0
               1 1 0]; % only put CZM between the element edges between materials 1-2
-DEIProgram2
+ndm = 2;
+[NodesOnElement,RegionOnElement,Coordinates,numnp,Output_data] ...
+    = DEIPFunction(InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm);
 
 % Update boundary conditions
 NodeBCCG = NodeBC;
 numBCCG = numBC;
-[NodeBC,numBC] = UpdateNodeSet(maxel,0,RegionOnElement,ElementsOnNodeNum,...
-                               ElementsOnNode,ElementsOnNodeDup,NodeBCCG,numBCCG);
+[NodeBC,numBC] = UpdateNodeSetFunction(0,RegionOnElement,Output_data,NodeBCCG,numBCCG);
 
 % Insert DG couplers
-ndm = 2;
-InterDGall
+[NodesOnElement,RegionOnElement,Coordinates,numnp,nen,numel,nummat,MateT,MatTypeTable,NodeTypeNum,RegionsOnInterface...
+] = InterFunction(2,InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm,Output_data,0,MateT,MatTypeTable);
 
 %% Algorithm definitions for NL_FEA_Program
 ProbType = [numnp numel nummat 2 2 nen];
-
-stepmax = 1;
-s_del_a = 1;%/21;stepmax;
-mults = (s_del_a:s_del_a:s_del_a*stepmax)';
-datastep = stepmax; % size of output arrays, can be larger than stepmax
-
-itermax = 7;
-Residratio = 10^-11;
-reststep = 10; % dump data at steps equalting multiples of this #

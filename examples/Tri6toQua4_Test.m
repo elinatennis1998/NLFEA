@@ -1,16 +1,16 @@
-% Patch test for rectangular domain of Q9 elements with DG couplers along
+% Patch test for rectangular domain of T6 elements with DG couplers along
 % interfaces between regions. User can modify the elements belonging to
-% each region.
+% each region. The T6 elements are subdivided into 3 Q4 elements.
 % Domain: 2x1 rectangle
 % Loading: Prescribed displacement of 0.1 on right edge.
 %
-% Last revision: 06/20/2017 TJT
+% Last revision: 05/13/2017 TJT
 
 clear
 % clc
 
-nen = 9;
-nel = 9;
+nen = 6;
+nel = 6;
 % Mesh with 6x6 tiling
 nu = 6;
 nv = 6;
@@ -26,7 +26,7 @@ node1 = 1;
 elmt1 = 1;
 mat = 1;
 rskip = 0;
-btype = 9;
+btype = 7;
 [Coordinates,NodesOnElement,RegionOnElement,numnp,numel] = block2d(type,rinc,sinc,node1,elmt1,mat,rskip,btype,Coordinates,nen);
 Coordinates = Coordinates';
 NodesOnElement = NodesOnElement';
@@ -52,23 +52,47 @@ FHist = 1;
 SHist = 1;
 SEHist = 1;
 
+% Split each tetrahedral element into 4 hexahedral elements
+[NodesOnElement,Coordinates,RegionOnElement,numnp,numel,nen] = Tri6toQua4(NodesOnElement,Coordinates,...
+           RegionOnElement,numnp,numel,nen);
+
 % Generate CZM interface: pairs of elements and faces, duplicate the nodes,
 % update the connectivities
 numnpCG = numnp;
 InterTypes = [0 0 0
               1 0 0
               1 1 0]; % only put CZM between the element edges between materials 1-2
-ndm = 2;
-[NodesOnElement,RegionOnElement,Coordinates,numnp,Output_data] ...
-    = DEIPFunction(InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm);
+DEIProgram2
 
 % Update boundary conditions
 NodeBCCG = NodeBC;
 numBCCG = numBC;
-[NodeBC,numBC] = UpdateNodeSetFunction(0,RegionOnElement,Output_data,NodeBCCG,numBCCG);
+[NodeBC,numBC] = UpdateNodeSet(maxel,0,RegionOnElement,ElementsOnNodeNum,...
+                               ElementsOnNode,ElementsOnNodeDup,NodeBCCG,numBCCG);
 
-% Insert DG couplers
-[NodesOnElement,RegionOnElement,Coordinates,numnp,nen,numel,nummat,MateT,MatTypeTable,NodeTypeNum,RegionsOnInterface...
-] = InterFunction(2,InterTypes,NodesOnElement,RegionOnElement,Coordinates,numnp,numel,nummat,nen,ndm,Output_data,0,MateT,MatTypeTable);
+numSI = numCL;
+numelCG = numel;
+nen_bulk = nen;
+SurfacesI = zeros(0,8);
+numSI = 0;
+for mat2 = 1:nummat
+    for mat1 = 1:mat2
+        
+        matI = mat2*(mat2-1)/2 + mat1; % ID for material pair (row=mat2, col=mat1)
+        if InterTypes(mat2,mat1) > 0
+        numSIi = numEonF(matI);
+%         SurfacesIi = squeeze(ElementsOnFacetInt(1:numSIi,1:4,matI));
+%         SurfacesI(numSI+1:numSI+numSIi,:) = squeeze(ElementsOnFacetInt(1:numSIi,1:8,matI));
+        locF = FacetsOnInterfaceNum(matI):(FacetsOnInterfaceNum(matI+1)-1);
+        facs = FacetsOnInterface(locF);
+        SurfacesIi = ElementsOnFacet(facs,:);
+        SurfacesI(numSI+1:numSI+numSIi,5:8) = SurfacesIi;
+        numSI = numSI + numSIi;
+        [NodesOnElement,RegionOnElement,nen,numel,nummat,MatTypeTable,MateT] = ...
+         FormDG(SurfacesIi,NodesOnElement,RegionOnElement,Coordinates,numSIi,nen_bulk,2,numel,nummat,6, ...
+                8,0,[0],MatTypeTable,MateT);
+        end
+    end
+end
 
 ProbType = [numnp numel nummat 2 2 nen];
