@@ -1,5 +1,5 @@
-function [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
-    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement)
+function [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel,ccell] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement,tfact,bCrys)
 %Elina Geut
 %Created 3/4/2019
 %Last Modified 4/16/2019
@@ -37,13 +37,14 @@ if num_locked_g == 1 %Checks how many grains are being locked
      NodesOnElement(numel,1:12) = [numnpMicro+(locked_g-1)*meso_nen+1 numnpMicro+(locked_g-1)*meso_nen+2 numnpMicro+(locked_g-1)*meso_nen+3 zeros(1,12-3)];
      RegionOnElement(numel) = l_MT;
      nummat = nummat + 1;
+     ccell = numel; %List of meso elements
 else  %Calculations for a case where more than 1 grain is locked
     
     %Data initialization/Node,Material reassignment/Zeroing out micro scale
     %and replacing by meso scale
         for i = 1:num_locked_g
-            micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),numelemg*nen_bulk,1)); %Corrected
-%             micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),tfact*bCrys^2*nen_bulk,1)); %Corrected
+%             micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),numelemg*nen_bulk,1)); %Corrected
+            micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),tfact*bCrys^2*nen_bulk,1)); %Corrected
             l(i) = length(micro);
             r_g = numgrain-locked_g(i);
             NodeBC = [NodeBC
@@ -107,7 +108,7 @@ else  %Calculations for a case where more than 1 grain is locked
             NodesOnElement(numel,1:12) = [numnpMicro+(locked_g(i)-1)*meso_nen+1 numnpMicro+(locked_g(i)-1)*meso_nen+2 numnpMicro+(locked_g(i)-1)*meso_nen+3 zeros(1,12-3)];
             RegionOnElement(numel) = l_MT;
             nummat = nummat + 1;
-
+            ccell(i) = numel; %List of meso elements
         end
 %         Assigning NodeBC for the first grain 
 % The set up procedure is written by hand in a notebook
