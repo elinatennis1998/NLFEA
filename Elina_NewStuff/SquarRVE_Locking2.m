@@ -6,12 +6,12 @@ clc
 
 % Mesh with nxn tiling
 PSPS = 's'; %plane stress condition 
-nen = 3;4; %number of nodes per element
-nel = 3;4; %max number of nodes per element
+nen = 4;3; %number of nodes per element
+nel = 4;3; %max number of nodes per element
 numgh = 3;5;4;8;7;6; %number of grains along horiz. edge
 numgs = 3;5;4;8;7;6; %number of grains along later. edge
 numgrain = numgh*numgs; %total number of grains in RVE
-bCrys = 2;1;8;3; %number of elem. along grain edge.
+bCrys = 3;2;1;8; %number of elem. along grain edge.
 if nen == 4
     tfact = 1; %quad 1
     btype = 0; %flag for meshing type (rect, triang, ...)
@@ -65,7 +65,7 @@ InterDGallG
 %% RVE/macroscale BC
 uRVE = [0 0];
 % eRVE = [.02 -0.02*.25 0];
-eRVE = [0.1 0 0];
+eRVE = [0.2 0 0];
 wRVE = 0;
 GrainIntegV
 InterIntegV

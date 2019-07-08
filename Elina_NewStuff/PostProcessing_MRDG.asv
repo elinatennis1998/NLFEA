@@ -12,30 +12,8 @@ for k = 1:length(nan)
     Node_U_V(nan(k),1:2) = 0; %Replacing all NaN inputs with zeros
 end
 %Calculating Grain average based on Dr. Truster's notes
-Coordinates = Coordinates';
-% GrainXnode = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-% GrainCoord = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-% GrainDispl = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-% GrainEpsl = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
 
-for i = 1:numgrain
-    for j = 1:nen_bulk
-        array = NodesOnElement(i,j);
-        GrainXnode(1,array) = GrainXmid(1,i);
-        GrainXnode(2,array) = GrainXmid(2,i);
-        GrainCoord(1,array) = Coordinates(1,array);
-        GrainCoord(2,array) = Coordinates(2,array);
-        GrainDispl(1,array) = GrainDisp(1,i);
-        GrainDispl(2,array) = GrainDisp(2,i);
-        GrainEpsl(1,array) = GrainEps(1,i);
-        GrainEpsl(2,array) = GrainEps(2,i);
-    end
-end
-
-GrainXref = GrainCoord - GrainXnode; %Reference coordinate of the grain for GrainEps
-Ug_new = zeros(numnp,2);
-
-grainG = zeros(numgrain,numelemg*tfact);
+grainG = zeros(numgrain,numelemg);
 grain = 0;
 % for each grain, which elements belong to it
 for j = 1:numgs
@@ -65,53 +43,43 @@ end
         GrainEps(2,grainG(g,:)) = GrainEps(2,g);
         GrainDisp(1,grainG(g,:)) = GrainDisp(1,g);
         GrainDisp(2,grainG(g,:)) = GrainDisp(2,g);
+        GrainXmid(1,grainG(g,:)) = GrainXmid(1,g);
+        GrainXmid(2,grainG(g,:)) = GrainXmid(2,g);
     end
 
-U_gg = GrainDispl + GrainEpsl.*GrainXref; %Calcullate average grain displacement in x
+CoordinatesF = Coordinates';
+% GrainXnode = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
+% GrainCoord = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
+% GrainDispl = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
+% GrainEpsl = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
 
-
-%Solid elements are arranged into Nodal array
-
-if tfact == 1
-    for i = 1:length(U_gg)
-        Ug_new(i,1) = U_gg(1,i);
-        Ug_new(i,2) = U_gg(2,i);
-    end
-elseif tfact == 2
-    for i = 1:numelCG/tfact
-        U_gg(1,i*tfact-1:i*tfact) = U_g(1,i);
-        U_gg(2,i*tfact-1:i*tfact) = U_g(2,i);
-    end
-    for i = 1:numelCG
-        for j = 1:nnz(NodesOnElement(i,:))
-            arrayCG = NodesOnElement(i,j);
-            Ug_new(arrayCG,1) = U_gg(1,i);
-            Ug_new(arrayCG,2) = U_gg(2,i);
-        end
+for i = 1:numelCG
+    for j = 1:nen_bulk
+        array = NodesOnElement(i,j);
+        GrainXnode(1,array) = GrainXmid(1,i);
+        GrainXnode(2,array) = GrainXmid(2,i);
+        GrainCoord(1,array) = CoordinatesF(1,array);
+        GrainCoord(2,array) = CoordinatesF(2,array);
+        GrainDispl(1,array) = GrainDisp(1,i);
+        GrainDispl(2,array) = GrainDisp(2,i);
+        GrainEpsl(1,array) = GrainEps(1,i);
+        GrainEpsl(2,array) = GrainEps(2,i);
     end
 end
-%DG elements are also arranged 
-% for i = 1:numel-numelCG
-%     condition1 = intersect(NodesOnElement(numelCG+i,1:nen_bulk),NodesOnElement(1:numelCG,1:nen_bulk));
-%     solid1 = find(sum(sort(NodesOnElement(1:numelCG,1:nen_bulk),2) == [condition1]',2)==nen_bulk);
-%     for m = 1:3
-%         arrayDG = NodesOnElement(numelCG+i,2*nen_bulk+m);
-%         Ug_new(arrayDG,1) = U_gg(1,solid1);
-%         Ug_new(arrayDG,2) = U_gg(1,solid1);
-%     end
-%     
-% end
-% 
-% for i = 1:numel-numelCG
-%     condition2 = intersect(NodesOnElement(numelCG+i,nen_bulk+1:nen_bulk*2),NodesOnElement(1:numelCG,1:nen_bulk));
-%     solid2 = find(sum(sort(NodesOnElement(1:numelCG,1:nen_bulk),2) == [condition2]',2)==nen_bulk);
-%     for m = 1:3
-%         arrayDG = NodesOnElement(numelCG+i,2*nen_bulk+3+m);
-%         Ug_new(arrayDG,1) = U_gg(1,solid2);
-%         Ug_new(arrayDG,2) = U_gg(2,solid2);
-%     end
-% end
 
+GrainXref = GrainCoord - GrainXnode; %Reference coordinate of the grain for GrainEps
+Ug_new = zeros(numnp,2);
+
+U_gg = GrainDispl + GrainEpsl.*GrainXref; %Calcullate average grain displacement in x
+Ug_new = U_gg';
+
+%Solid elements are arranged into Nodal array
+for i = 1:length(U_gg)
+    Ug_new(i,1) = U_gg(1,i);
+    Ug_new(i,2) = U_gg(2,i);
+end
+
+%DG elements are also arranged 
 for i = 1:numel-numelCG
     Ug_new(NodesOnElement(numelCG+i,nen_bulk*2+1:nen_bulk*2+3),1) = 0;
     Ug_new(NodesOnElement(numelCG+i,nen_bulk*2+1:nen_bulk*2+3),2) = 0;
@@ -122,11 +90,14 @@ for i = 1:numel-numelCG
          Ug_new(arrayDG1,1) = 0;
          Ug_new(arrayDG1,2) = 0;
          arrayDG2 = NodesOnElement(numelCG+i,2*nen_bulk+3+2);
-         Ug_new(arrayDG2,1) = GrainEps(1,solid3);
-         Ug_new(arrayDG2,2) = GrainEps(2,solid3);
+         Ug_new(arrayDG2,1) = NodeBC(1,arrayDG2);
+         Ug_new(arrayDG2,2) = NodeBC(2,arrayDG2);
          arrayDG3 = NodesOnElement(numelCG+i,2*nen_bulk+3+1);
-         Ug_new(arrayDG3,1) = GrainDisp(1,solid3);
-         Ug_new(arrayDG3,2) = GrainDisp(2,solid3);
+         Ug_new(arrayDG3,1) = NodeBC(1,arrayDG3);
+         Ug_new(arrayDG3,2) = NodeBC(2,arrayDG3);
+         arrayDG4 = NodesOnElement(numelCG+i,2*nen_bulk+3+3);
+         Ug_new(arrayDG4,1) = NodeBC(1,arrayDG4);
+         Ug_new(arrayDG4,2) = NodeBC(2,arrayDG4);
     end
 end
 

@@ -86,15 +86,21 @@ for i = 1:numel-numelCG
     condition3 = sort(NodesOnElement(numelCG+i,1:nen_bulk),2);
      if NodesOnElement(numelCG+i,1:nen_bulk) == NodesOnElement(numelCG+i,nen_bulk+1:nen_bulk*2)
          solid3 = find(sum(sort(NodesOnElement(1:numelCG,1:nen_bulk),2) == [condition3],2) >= nen_bulk);
-         arrayDG1 = NodesOnElement(numelCG+i,2*nen_bulk+3+3);
-         Ug_new(arrayDG1,1) = 0;
-         Ug_new(arrayDG1,2) = 0;
-         arrayDG2 = NodesOnElement(numelCG+i,2*nen_bulk+3+2);
-         Ug_new(arrayDG2,1) = GrainEps(1,solid3);
-         Ug_new(arrayDG2,2) = GrainEps(2,solid3);
-         arrayDG3 = NodesOnElement(numelCG+i,2*nen_bulk+3+1);
-         Ug_new(arrayDG3,1) = GrainDisp(1,solid3);
-         Ug_new(arrayDG3,2) = GrainDisp(2,solid3);
+         arrayDG = NodesOnElement(numelCG+i,2*nen_bulk+3+3);
+         Ug_new(arrayDG,1) = 0;
+         Ug_new(arrayDG,2) = 0;
+         array1 = NodesOnElement(numelCG+i,2*nen_bulk+3+1);
+         arrayDG1 = find(NodeBC == NodesOnElement(numelCG+i,2*nen_bulk+3+1));
+         Ug_new(array1,1) = NodeBC(arrayDG1(1),3);
+         Ug_new(array1,2) = NodeBC(arrayDG1(2),3);
+         array2 = NodesOnElement(numelCG+i,2*nen_bulk+3+2);
+         arrayDG2 = find(NodeBC == NodesOnElement(numelCG+i,2*nen_bulk+3+2));
+         Ug_new(array2,1) = NodeBC(arrayDG2(1),3);
+         Ug_new(array2,2) = NodeBC(arrayDG2(2),3);
+         array3 = NodesOnElement(numelCG+i,2*nen_bulk+3+3);
+         arrayDG3 = find(NodeBC == NodesOnElement(numelCG+i,2*nen_bulk+3+3));
+         Ug_new(array3,1) = NodeBC(arrayDG3(1),3);
+         Ug_new(array3,2) = NodeBC(arrayDG3(2),3);
     end
 end
 
