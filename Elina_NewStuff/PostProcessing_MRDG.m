@@ -12,7 +12,6 @@ for k = 1:length(nan)
     Node_U_V(nan(k),1:2) = 0; %Replacing all NaN inputs with zeros
 end
 %Calculating Grain average based on Dr. Truster's notes
-
 grainG = zeros(numgrain,numelemg);
 grain = 0;
 % for each grain, which elements belong to it
@@ -37,22 +36,17 @@ for j = 1:numgs
         end
     end
 end
-% % inverse map: the grain that an element belongs to
-    for g = 1:numgrain
-        GrainEps(1,grainG(g,:)) = GrainEps(1,g);
-        GrainEps(2,grainG(g,:)) = GrainEps(2,g);
-        GrainDisp(1,grainG(g,:)) = GrainDisp(1,g);
-        GrainDisp(2,grainG(g,:)) = GrainDisp(2,g);
-        GrainXmid(1,grainG(g,:)) = GrainXmid(1,g);
-        GrainXmid(2,grainG(g,:)) = GrainXmid(2,g);
-    end
 
+%Reference coordinate of the grain for GrainEps
+for g = 1:numgrain
+    GrainEps(1,grainG(g,:)) = GrainEps(1,g);
+    GrainEps(2,grainG(g,:)) = GrainEps(2,g);
+    GrainDisp(1,grainG(g,:)) = GrainDisp(1,g);
+    GrainDisp(2,grainG(g,:)) = GrainDisp(2,g);
+    GrainXmid(1,grainG(g,:)) = GrainXmid(1,g);
+    GrainXmid(2,grainG(g,:)) = GrainXmid(2,g);
+end
 CoordinatesF = Coordinates';
-% GrainXnode = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-% GrainCoord = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-% GrainDispl = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-% GrainEpsl = zeros(ndm,(size(NodesOnElement(1:numelCG,1:nen_bulk),2))*(size(NodesOnElement(1:numelCG,1:nen_bulk),1)));
-
 for i = 1:numelCG
     for j = 1:nen_bulk
         array = NodesOnElement(i,j);
@@ -66,19 +60,13 @@ for i = 1:numelCG
         GrainEpsl(2,array) = GrainEps(2,i);
     end
 end
-
 GrainXref = GrainCoord - GrainXnode; %Reference coordinate of the grain for GrainEps
 Ug_new = zeros(numnp,2);
-
-U_gg = GrainDispl + GrainEpsl.*GrainXref; %Calcullate average grain displacement in x
-Ug_new = U_gg';
-
 %Solid elements are arranged into Nodal array
-for i = 1:length(U_gg)
-    Ug_new(i,1) = U_gg(1,i);
-    Ug_new(i,2) = U_gg(2,i);
+for i = 1:length(GrainDispl)
+    Ug_new(i,1) = GrainDispl(1,i) + GrainEpsl(1,i).*GrainXref(1,i);
+    Ug_new(i,2) = GrainDispl(2,i) + GrainEpsl(2,i).*GrainXref(2,i);
 end
-
 %DG elements are also arranged 
 for i = 1:numel-numelCG
     Ug_new(NodesOnElement(numelCG+i,nen_bulk*2+1:nen_bulk*2+3),1) = 0;

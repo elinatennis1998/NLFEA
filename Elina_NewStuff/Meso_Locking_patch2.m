@@ -1,5 +1,5 @@
-function [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
-    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement)
+function [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel,ccell] = Meso_Locking_patch2(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement,RegionsOnInterface)
 %Elina Geut
 %Created 3/4/2019
 %Last Modified 4/16/2019
@@ -37,21 +37,22 @@ if num_locked_g == 1 %Checks how many grains are being locked
      NodesOnElement(numel,1:12) = [numnpMicro+(locked_g-1)*meso_nen+1 numnpMicro+(locked_g-1)*meso_nen+2 numnpMicro+(locked_g-1)*meso_nen+3 zeros(1,12-3)];
      RegionOnElement(numel) = l_MT;
      nummat = nummat + 1;
+     ccell = numel; %List of meso elements
 else  %Calculations for a case where more than 1 grain is locked
     
     %Data initialization/Node,Material reassignment/Zeroing out micro scale
     %and replacing by meso scale
         for i = 1:num_locked_g
-            micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),numelemg*nen_bulk,1)); %Corrected
-%             micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),tfact*bCrys^2*nen_bulk,1)); %Corrected
+%             micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),numelemg*nen_bulk,1)); %Corrected
+           micro = unique(reshape(NodesOnElement(grainG(locked_g(i),:),1:nen_bulk),numelemg*nen_bulk,1)); %Corrected
             l(i) = length(micro);
             r_g = numgrain-locked_g(i);
             NodeBC = [NodeBC
                 [micro ones(l(i),1) zeros(l(i),1)
-                micro 2*ones(l(i),1) zeros(l(i),1)]];
+                micro 2*ones(l(i),1) zeros(l(i),1)]]; %Zero out elements ina grain
             
             index1 = find(MateT(:,1) == locked_g(i));
-            
+            %The MateT arrangement is [cR cL fR fL]
             %Value of 1st column 
             
             for k = 1:2
@@ -95,36 +96,38 @@ else  %Calculations for a case where more than 1 grain is locked
                     flag_micro_r = 1;
                 end
                 MateT(index2(j),5:8) = [flag_meso_r flag_meso_l flag_micro_r flag_micro_l];
+                MateT(index2(j),5:8) = [0 1 1 0];
             end
             
-%             index2 = find(MateT(:,2) == locked_g(i));
-%             MateT(index2(1),5:8) = [0 1 1 0];
-%             MateT(index2(2),5:8) = [0 1 1 0];
             l_MT = length(MateT)+1;
             MateT(l_MT,1:8) = [MateT(locked_g(i),1:3) GrainA 0 0 0 0];
             MatTypeTable(1:3,l_MT) = [l_MT 11 0]';
+            BoundGrain = find(sum(MateT(:,1) == MateT(:,2),2) >= 1);
+            for count = 1:length(BoundGrain)
+                DBCposition = BoundGrain(count);
+                MateT(DBCposition,5:8) = [1 1 1 0];
+            end
             numel = numel + 1;
-            NodesOnElement(numel,1:12) = [numnpMicro+(locked_g(i)-1)*meso_nen+1 numnpMicro+(locked_g(i)-1)*meso_nen+2 numnpMicro+(locked_g(i)-1)*meso_nen+3 zeros(1,12-3)];
+            NodesOnElement(numel,1:12) = [numnpMicro+(locked_g(i)-1)*meso_nen+1 numnpMicro+(locked_g(i)-1)*meso_nen+2 ...
+                numnpMicro+(locked_g(i)-1)*meso_nen+3 zeros(1,12-3)];
             RegionOnElement(numel) = l_MT;
             nummat = nummat + 1;
-
+            ccell(i) = numel; %List of meso elements
         end
 %         Assigning NodeBC for the first grain 
 % The set up procedure is written by hand in a notebook
-            NodeBC = [NodeBC
-                [(numnpMicro+1:numnpMicro+(locked_g(1)-1)*meso_nen)' ones((locked_g(1)-1)*meso_nen,1) zeros((locked_g(1)-1)*meso_nen,1)
-                (numnpMicro+1:numnpMicro+(locked_g(1)-1)*meso_nen)' 2*ones((locked_g(1)-1)*meso_nen,1) zeros((locked_g(1)-1)*meso_nen,1)]];
-            
+            NodeBC = [NodeBC 
+            [(numnpMicro+1:numnpMicro+(locked_g(1)-1)*meso_nen)' ones((locked_g(1)-1)*meso_nen,1) zeros((locked_g(1)-1)*meso_nen,1)
+            (numnpMicro+1:numnpMicro+(locked_g(1)-1)*meso_nen)' 2*ones((locked_g(1)-1)*meso_nen,1) zeros((locked_g(1)-1)*meso_nen,1)]];
 %          NodeBC for all grains other than first and last 
 % r_g number of grains between the two locked grains 
 
-        for n = 1:num_locked_g-1
-            r_g(n) = locked_g(n+1)-(locked_g(n)+1);
-            NodeBC = [NodeBC
-                [(numnpMicro+locked_g(n)*meso_nen+1:numnpMicro+(locked_g(n+1)-1)*meso_nen)'   ones(r_g(n)*meso_nen,1) zeros(r_g(n)*meso_nen,1)
-                (numnpMicro+locked_g(n)*meso_nen+1:numnpMicro+(locked_g(n+1)-1)*meso_nen)' 2*ones(r_g(n)*meso_nen,1) zeros(r_g(n)*meso_nen,1)]];
-        end
-            
+            for n = 1:num_locked_g-1
+                r_g(n) = locked_g(n+1)-(locked_g(n)+1);
+                NodeBC = [NodeBC
+                    [(numnpMicro+locked_g(n)*meso_nen+1:numnpMicro+(locked_g(n+1)-1)*meso_nen)'   ones(r_g(n)*meso_nen,1) zeros(r_g(n)*meso_nen,1)
+                    (numnpMicro+locked_g(n)*meso_nen+1:numnpMicro+(locked_g(n+1)-1)*meso_nen)' 2*ones(r_g(n)*meso_nen,1) zeros(r_g(n)*meso_nen,1)]];
+            end
 %         Assigning NodeBC for the last grain
 
         r_g = numgrain-locked_g(num_locked_g);

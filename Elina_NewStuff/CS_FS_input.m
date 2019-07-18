@@ -1,5 +1,6 @@
-% CST solid element with 4x4 grain RVE. Coarse
-% scale implemented as a material parameter
+% Fine Scale, Coarse Scale file 
+% Elina Geut
+% 7/18/2019
 
 clear
 
@@ -10,7 +11,7 @@ nel = 4;3; %max number of nodes per element
 numgh = 5;4;3;8;7;6; %number of grains along horiz. edge
 numgs = 5;4;3;8;7;6; %number of grains along later. edge
 numgrain = numgh*numgs; %total number of grains in RVE
-bCrys = 2;1;3;8; %number of elem. along grain edge
+bCrys = 1;2;3;8; %number of elem. along grain edge
 CS_flag = 1; %Flag to collect data for post processing
 if nen == 4
     tfact = 1; %quad 1
@@ -47,7 +48,7 @@ NodesOnElement = NodesOnElement';
 %Note: alterphase is a built-in function for maerial assignment, id desired
 %otherwise, must hard code
 m2 = [100 0.25 1]; %material type 1
-m1 = [100 0.25 1]; %material type 2
+m1 = [200 0.25 1]; %material type 2
 [RegionOnElement,MatTypeTable,MateT,nummat,grainG,BoundGrains,CornerGrain] = GeomProp(numgrain,numelemg,tfact,numgs,numgh,bCrys,m2,m1,nel,nu);
 % MateT = [m1; m2; m1; m2; m2; m1; m2; m1; m1; m2; m1; m2; m2; m1; m2; m1];
 
@@ -77,7 +78,7 @@ GrainIntegV
 InterIntegV
 
 %% Key Part: set up fluxes and jumps on the grain boundaries and RVE
-TFS = 2; % FE 1; %Taylor 5; % Fine Scale 3; % Sachs  4; % Combo 
+TFS = 2; % FE 5; % Fine Scale 1; %Taylor 3; % Sachs  4; % Combo 
 factorTS = 1;0;.5;.25;.75; % factor for Taylor vs Sachs; 1 means Taylor
 factorT = factorTS;1/3;
 factorS = 1-factorTS;1/3;
@@ -85,17 +86,17 @@ FormRVEDirichlet
 
 %% Zero out meso grains; for this file as it is, I don't want to compute the
 % the sequence has to be retained: from low to high order of grain number
-%     for j = 1:numgrain
-%         locked_g(1,j) = j;
-%     end
-% locked_g = [1 3];
-
-% locked_g = [1 5];
-locked_g = [1 2 3 4 5 6 10 11 15 16 20 21 22 23 24 25];
-num_locked_g = length(locked_g); 
-meso_nen = 3; %Number of nodes per mose element
-sub = 11; %subroutine number for a meso element
-combo = 1; %Flag for plotting FS on CS 
-[NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel,ccell] = Meso_Locking_patch2(NodesOnElement,num_locked_g,NodeBC,locked_g,....
-    meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement,RegionsOnInterface);
+if TFS == 5
+    for j = 1:numgrain
+        locked_g(1,j) = j;
+    end
+    num_locked_g = length(locked_g);
+    meso_nen = 3; %Number of nodes per mose element
+    sub = 11; %subroutine number for a meso element
+    combo = 1; %Flag for plotting FS on CS
+    [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel,ccell] = Meso_Locking_patch2(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+        meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement,RegionsOnInterface);
+%     [NodeBC,NodesOnElement,RegionOnElement,nummat,MateT,MatTypeTable,numBC,numel] = Meso_Locking_patch(NodesOnElement,num_locked_g,NodeBC,locked_g,....
+%     meso_nen,grainG,nen_bulk,numelemg,GrainA,numel,numnpMicro,numnpMeso,MateT,numgrain,nummat,MatTypeTable,RegionOnElement);
+end
 ProbType = [numnp numel nummat 2 2 nen];

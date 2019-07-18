@@ -1,4 +1,4 @@
-function [RegionOnElement,MatTypeTable,MateT,nummat,grainG] = GeomProp(numgrain,numelemg,tfact,numgs,numgh,bCrys,m2,m1,nel,nu)
+function [RegionOnElement,MatTypeTable,MateT,nummat,grainG,BoundGrains,CornerGrain] = GeomProp(numgrain,numelemg,tfact,numgs,numgh,bCrys,m2,m1,nel,nu)
 %Elina Geut 6/27/2019
 %   Function for assigning RVE properties 
 grainG = zeros(numgrain,numelemg*tfact);
@@ -37,6 +37,25 @@ alterphase = 2*rem(1:numgrain,2) - 1;
 alterphase(alterphase==-1) = 2;
 MateT = mats(alterphase,:);%% Output quantity flags
 nummat = numgrain;
+BoundGrains = zeros(numgh*numgs-(numgh-2)*(numgs-2),1);
+corner = [1 numgh];
+for m = 1:numgs
+    for k = 1:numgh
+        if m == 1
+            BoundGrains(k) = k;
+        elseif m == numgs
+            BoundGrains(m*numgh-(numgh-k)) = numgs*(numgh-1)+k;
+        else
+            for s = 1:2
+                BoundGrains(numgh*(m-1)+s) = corner(s)+numgh*(m-1);
+            end
+        end
+    end
+end
 
+CornerGrain(1) = 1;
+CornerGrain(2) = numgh;
+CornerGrain(3) = numgh*(numgs-1)+1;
+CornerGrain(4) = numgh*numgs;
 end
 
